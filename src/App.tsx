@@ -8,6 +8,7 @@ import { MainDisplay } from './components/MainDisplay';
 import { OperatorButtons } from './components/OperatorButtons';
 import { createInitialState, processToken, createToken } from './utils/tokenProcessor';
 import { createInitialMathTokenSystem, processInputTokensToMathTokens, buildDisplayFromMathTokens, removeLastUsefulToken } from './utils/mathTokenProcessor';
+import { performCalculation } from './utils/mathEngine';
 import type { AppStateComplete, InputToken, FractionDenominator, Operator, MathTokenSystem } from './types';
 import './components/NumericPad.css';
 import './App.css';
@@ -85,6 +86,26 @@ function App() {
   const handleOperatorClick = (operator: Operator) => {
     const token = createToken('Operator', operator);
     handleToken(token);
+    
+    // If it's an equals operator, perform calculation after token is processed
+    if (operator === '=') {
+      setTimeout(() => {
+        setMathTokenSystem(prev => {
+          const result = performCalculation(prev.mathTokens);
+          if (result.error) {
+            console.error('Calculation error:', result.error);
+            return prev; // Don't update on error
+          }
+          
+          const newDisplayValue = buildDisplayFromMathTokens(result.newTokens);
+          return {
+            ...prev,
+            mathTokens: result.newTokens,
+            displayValue: newDisplayValue,
+          };
+        });
+      }, 0);
+    }
   };
 
   const handleClear = () => {

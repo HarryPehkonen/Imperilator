@@ -111,7 +111,7 @@ describe('Math Token Processor', () => {
     ];
     
     const display = buildDisplayFromMathTokens(mathTokens);
-    expect(display).toBe('5ft 31/4in + 3.14');
+    expect(display).toBe('5ft 3 1/4in + 3.14');
   });
 
   test('should remove last useful token with backspace', () => {
@@ -196,6 +196,6 @@ describe('Math Token Processor', () => {
     });
     
     const display = buildDisplayFromMathTokens(afterBackspace);
-    expect(display).toBe('21/2in');
+    expect(display).toBe('2 1/2in');
   });
 });

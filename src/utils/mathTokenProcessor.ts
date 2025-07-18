@@ -174,6 +174,9 @@ const formatImperialToken = (token: ImperialToken | any): string => {
       inchesStr += token.inches.toString();
     }
     if (token.numerator > 0) {
+      if (token.inches > 0) {
+        inchesStr += ' '; // Add space between inches and fraction
+      }
       inchesStr += `${token.numerator}/${token.denominator}`;
     }
     if (inchesStr) {
