@@ -166,17 +166,6 @@ function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>Imperilator Input</h1>
-        <p>Measurement Input Tool</p>
-        <small style={{ color: '#666' }}>
-          Useful: {usefulTokens.length} | Math: {mathTokens.length} | 
-          <button onClick={exportTokenHistory} style={{ marginLeft: '0.5rem', fontSize: '0.8rem' }}>
-            Export Tokens
-          </button>
-        </small>
-      </header>
-      
       <main className="app-main">
         <MainDisplay 
           value={displayValue} 
@@ -184,64 +173,91 @@ function App() {
         />
         
         
-        <FractionSelector
-          selectedDenominator={appState.fractionDenominator}
-          onChange={handleFractionDenominatorChange}
-        />
-        
-        <OperatorButtons onOperatorClick={handleOperatorClick} />
-        
-        <div className="measurements-section">
-          <div className="top-pads">
-            <div 
-              className={`pad-wrapper ${appState.activePad === 'feet' ? 'active' : ''}`}
-              onClick={() => handlePadClick('feet')}
-            >
-              <NumericPad
-                value={appState.measurements.feet}
-                onChange={() => {}} // No direct onChange needed
-                label="Feet"
-                showFractions={false}
-                onNumberClick={(num) => handleNumberClick(num, 'feet')}
-              />
-            </div>
-            
-            <div 
-              className={`pad-wrapper ${appState.activePad === 'inches' ? 'active' : ''}`}
-              onClick={() => handlePadClick('inches')}
-            >
-              <NumericPad
-                value={appState.measurements.inches}
-                onChange={() => {}} // No direct onChange needed
-                label="Inches"
-                fractionDenominator={appState.fractionDenominator}
-                showFractions={true}
-                onNumberClick={(num) => handleNumberClick(num, 'inches')}
-                onFractionClick={(numerator, denominator) => handleFractionClick('inches', numerator, denominator)}
-              />
-            </div>
+        {/* Top row: Feet and Inches side-by-side */}
+        <div className="top-pads-compact">
+          <div 
+            className={`pad-wrapper-compact feet-column ${appState.activePad === 'feet' ? 'active' : ''}`}
+            onClick={() => handlePadClick('feet')}
+          >
+            <NumericPad
+              value={appState.measurements.feet}
+              onChange={() => {}}
+              label="Feet"
+              showFractions={false}
+              onNumberClick={(num) => handleNumberClick(num, 'feet')}
+            />
           </div>
           
-          <div className="bottom-pad">
-            <div 
-              className={`pad-wrapper ${appState.activePad === 'scalar' ? 'active' : ''}`}
-              onClick={() => handlePadClick('scalar')}
-            >
-              <ScalarPad
-                value={appState.measurements.scalar}
-                onChange={() => {}} // No direct onChange needed
-                label="Scalar"
-                onNumberClick={(num) => handleNumberClick(num, 'scalar')}
-                onDecimalClick={handleDecimalClick}
-              />
+          <div 
+            className={`pad-wrapper-compact inches-column ${appState.activePad === 'inches' ? 'active' : ''}`}
+            onClick={() => handlePadClick('inches')}
+          >
+            <NumericPad
+              value={appState.measurements.inches}
+              onChange={() => {}}
+              label="Inches"
+              showFractions={false}
+              onNumberClick={(num) => handleNumberClick(num, 'inches')}
+            />
+          </div>
+        </div>
+
+        {/* Fractions row: Full width */}
+        <div className="fractions-row">
+          <div className="fractions-pad">
+            <FractionSelector
+              selectedDenominator={appState.fractionDenominator}
+              onChange={handleFractionDenominatorChange}
+            />
+            <div className="fraction-grid">
+              {(() => {
+                const fractions = [];
+                for (let i = 1; i < appState.fractionDenominator; i++) {
+                  // Simplify fraction for display
+                  const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+                  const divisor = gcd(i, appState.fractionDenominator);
+                  const simplifiedNum = i / divisor;
+                  const simplifiedDen = appState.fractionDenominator / divisor;
+                  
+                  fractions.push(
+                    <button
+                      key={i}
+                      onClick={() => handleFractionClick('inches', i, appState.fractionDenominator)}
+                      className="fraction-btn-compact"
+                    >
+                      {simplifiedNum}/{simplifiedDen}
+                    </button>
+                  );
+                }
+                return fractions;
+              })()}
             </div>
           </div>
         </div>
-        
-        <GlobalControls
-          onClear={handleClear}
-          onBackspace={handleBackspace}
-        />
+
+        {/* Bottom row: Scalar + Operators & Controls */}
+        <div className="bottom-row">
+          <div 
+            className={`pad-wrapper-compact ${appState.activePad === 'scalar' ? 'active' : ''}`}
+            onClick={() => handlePadClick('scalar')}
+          >
+            <ScalarPad
+              value={appState.measurements.scalar}
+              onChange={() => {}}
+              label="Scalar"
+              onNumberClick={(num) => handleNumberClick(num, 'scalar')}
+              onDecimalClick={handleDecimalClick}
+            />
+          </div>
+
+          <div className="controls-section">
+            <OperatorButtons onOperatorClick={handleOperatorClick} />
+            <GlobalControls
+              onClear={handleClear}
+              onBackspace={handleBackspace}
+            />
+          </div>
+        </div>
       </main>
     </div>
   );

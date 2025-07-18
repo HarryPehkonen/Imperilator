@@ -6,13 +6,18 @@ interface OperatorButtonsProps {
 }
 
 export const OperatorButtons: React.FC<OperatorButtonsProps> = ({ onOperatorClick }) => {
-  const operators: Operator[] = ['=', '+', '-', 'x', '/'];
+  const mathOperators: Operator[] = ['+', '-', 'x', '/'];
   
   return (
     <div className="operator-buttons">
-      <h4>Operators</h4>
+      <button
+        onClick={() => onOperatorClick('=')}
+        className="equals-btn"
+      >
+        =
+      </button>
       <div className="operator-grid">
-        {operators.map(operator => (
+        {mathOperators.map(operator => (
           <button
             key={operator}
             onClick={() => onOperatorClick(operator)}

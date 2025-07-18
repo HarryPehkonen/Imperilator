@@ -14,7 +14,6 @@ export const FractionSelector: React.FC<FractionSelectorProps> = ({
 
   return (
     <div className="fraction-selector">
-      <h3>Fraction Precision</h3>
       <div className="selector-buttons">
         {denominators.map(denominator => (
           <button

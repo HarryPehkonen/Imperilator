@@ -77,10 +77,6 @@ export const NumericPad: React.FC<NumericPadProps> = ({
 
   return (
     <div className="numeric-pad">
-      <div className="pad-header">
-        <h3>{label}</h3>
-      </div>
-      
       <div className="number-grid">
         {[7, 8, 9, 4, 5, 6, 1, 2, 3].map(num => (
           <button

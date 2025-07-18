@@ -11,8 +11,8 @@ export const GlobalControls: React.FC<GlobalControlsProps> = ({
 }) => {
   return (
     <div className="global-controls">
-      <button onClick={onClear} className="clear-btn">Clear All</button>
-      <button onClick={onBackspace} className="backspace-btn">⌫ Backspace</button>
+      <button onClick={onClear} className="clear-btn">Clear</button>
+      <button onClick={onBackspace} className="backspace-btn">⌫</button>
     </div>
   );
 };

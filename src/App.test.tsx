@@ -16,7 +16,7 @@ describe('State Machine Tests', () => {
   };
 
   const clickClearAll = () => {
-    fireEvent.click(screen.getByText('Clear All'));
+    fireEvent.click(screen.getByText('Clear'));
   };
 
   const clickOperator = (operator: string) => {
@@ -237,7 +237,7 @@ describe('State Machine Tests', () => {
     expect(scalarDisplay?.textContent).toBe('123');
     
     // Click backspace
-    fireEvent.click(screen.getByText('⌫ Backspace'));
+    fireEvent.click(screen.getByText('⌫'));
     
     // Should remove last character
     expect(scalarDisplay?.textContent).toBe('12');
