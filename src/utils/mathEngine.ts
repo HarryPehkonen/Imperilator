@@ -72,43 +72,149 @@ const evaluateExpression = (tokens: MathToken[]): MathToken => {
     return evaluateBinaryOperation(left, (operator as OperatorToken).operator, right);
   }
 
-  // For now, we only handle simple binary operations
-  // TODO: Implement more complex expression parsing
-  throw new Error("Complex expressions not yet supported");
+  // Handle complex expressions with operator precedence
+  return evaluateComplexExpression(tokens);
+};
+
+// Shunting Yard Algorithm Implementation
+const evaluateComplexExpression = (tokens: MathToken[]): MathToken => {
+  // Step 1: Convert infix to postfix using Shunting Yard
+  const postfix = infixToPostfix(tokens);
+  
+  // Step 2: Evaluate postfix expression
+  return evaluatePostfix(postfix);
+};
+
+const getOperatorPrecedence = (operator: Operator): number => {
+  switch (operator) {
+    case 'x':
+    case '/':
+      return 2; // High precedence
+    case '+':
+    case '-':
+      return 1; // Low precedence
+    default:
+      return 0;
+  }
+};
+
+const isLeftAssociative = (operator: Operator): boolean => {
+  // All our operators are left-associative
+  return true;
+};
+
+const infixToPostfix = (tokens: MathToken[]): MathToken[] => {
+  const output: MathToken[] = [];
+  const operatorStack: OperatorToken[] = [];
+  
+  for (const token of tokens) {
+    if (token.type === 'Imperial' || token.type === 'Scalar') {
+      // Operands go directly to output
+      output.push(token);
+    } else if (token.type === 'Operator') {
+      const currentOp = token as OperatorToken;
+      const currentPrec = getOperatorPrecedence(currentOp.operator);
+      
+      // Pop operators with higher or equal precedence (for left-associative)
+      while (
+        operatorStack.length > 0 &&
+        getOperatorPrecedence(operatorStack[operatorStack.length - 1].operator) >= currentPrec &&
+        isLeftAssociative(currentOp.operator)
+      ) {
+        output.push(operatorStack.pop()!);
+      }
+      
+      // Push current operator to stack
+      operatorStack.push(currentOp);
+    }
+  }
+  
+  // Pop remaining operators
+  while (operatorStack.length > 0) {
+    output.push(operatorStack.pop()!);
+  }
+  
+  return output;
+};
+
+const evaluatePostfix = (postfix: MathToken[]): MathToken => {
+  const stack: MathToken[] = [];
+  
+  for (const token of postfix) {
+    if (token.type === 'Imperial' || token.type === 'Scalar') {
+      // Operands go on the stack
+      stack.push(token);
+    } else if (token.type === 'Operator') {
+      // Pop two operands and apply operator
+      if (stack.length < 2) {
+        throw new Error('Invalid expression: not enough operands');
+      }
+      
+      const right = stack.pop()!;
+      const left = stack.pop()!;
+      const operator = (token as OperatorToken).operator;
+      
+      const result = evaluateBinaryOperation(left, operator, right);
+      stack.push(result);
+    }
+  }
+  
+  if (stack.length !== 1) {
+    throw new Error('Invalid expression: incorrect number of operands');
+  }
+  
+  return stack[0];
 };
 
 const evaluateBinaryOperation = (left: MathToken, operator: Operator, right: MathToken): MathToken => {
   const leftType = left.type;
   const rightType = right.type;
 
+  // Convert solution tokens to their base types for operations
+  const leftToken = convertSolutionTokenToBase(left);
+  const rightToken = convertSolutionTokenToBase(right);
+  const leftBaseType = leftToken.type;
+  const rightBaseType = rightToken.type;
+
   // Length + Length = Length
-  if (leftType === 'Imperial' && rightType === 'Imperial' && operator === '+') {
-    return addLengths(left as ImperialToken, right as ImperialToken);
+  if ((leftBaseType === 'Imperial' || leftBaseType === 'Length') && 
+      (rightBaseType === 'Imperial' || rightBaseType === 'Length') && 
+      operator === '+') {
+    return addLengths(leftToken as ImperialToken, rightToken as ImperialToken);
   }
 
   // Length - Length = Length
-  if (leftType === 'Imperial' && rightType === 'Imperial' && operator === '-') {
-    return subtractLengths(left as ImperialToken, right as ImperialToken);
+  if ((leftBaseType === 'Imperial' || leftBaseType === 'Length') && 
+      (rightBaseType === 'Imperial' || rightBaseType === 'Length') && 
+      operator === '-') {
+    return subtractLengths(leftToken as ImperialToken, rightToken as ImperialToken);
   }
 
   // Scalar × Length = Length
-  if (leftType === 'Scalar' && rightType === 'Imperial' && operator === 'x') {
-    return multiplyScalarByLength(left as ScalarToken, right as ImperialToken);
+  if ((leftBaseType === 'Scalar' || leftBaseType === 'ScalarSolution') && 
+      (rightBaseType === 'Imperial' || rightBaseType === 'Length') && 
+      operator === 'x') {
+    return multiplyScalarByLength(leftToken as ScalarToken, rightToken as ImperialToken);
   }
 
   // Length × Scalar = Length
-  if (leftType === 'Imperial' && rightType === 'Scalar' && operator === 'x') {
-    return multiplyScalarByLength(right as ScalarToken, left as ImperialToken);
+  if ((leftBaseType === 'Imperial' || leftBaseType === 'Length') && 
+      (rightBaseType === 'Scalar' || rightBaseType === 'ScalarSolution') && 
+      operator === 'x') {
+    return multiplyScalarByLength(rightToken as ScalarToken, leftToken as ImperialToken);
   }
 
   // Length × Length = Area
-  if (leftType === 'Imperial' && rightType === 'Imperial' && operator === 'x') {
-    return multiplyLengths(left as ImperialToken, right as ImperialToken);
+  if ((leftBaseType === 'Imperial' || leftBaseType === 'Length') && 
+      (rightBaseType === 'Imperial' || rightBaseType === 'Length') && 
+      operator === 'x') {
+    return multiplyLengths(leftToken as ImperialToken, rightToken as ImperialToken);
   }
 
   // Scalar operations
-  if (leftType === 'Scalar' && rightType === 'Scalar') {
-    return evaluateScalarOperation(left as ScalarToken, operator, right as ScalarToken);
+  if ((leftBaseType === 'Scalar' || leftBaseType === 'ScalarSolution') && 
+      (rightBaseType === 'Scalar' || rightBaseType === 'ScalarSolution')) {
+    return evaluateScalarOperation(leftToken as ScalarToken, operator, rightToken as ScalarToken);
   }
 
   throw new Error(`Unsupported operation: ${leftType} ${operator} ${rightType}`);
@@ -260,4 +366,28 @@ const convertScalarToScalarSolution = (scalar: ScalarToken): ScalarSolutionToken
     type: 'ScalarSolution',
     value: scalar.value,
   };
+};
+
+// Convert solution tokens back to their base types for operations
+const convertSolutionTokenToBase = (token: MathToken): MathToken => {
+  switch (token.type) {
+    case 'Length':
+      // Convert Length solution token back to Imperial token
+      return {
+        type: 'Imperial',
+        feet: token.feet,
+        inches: token.inches,
+        numerator: token.numerator,
+        denominator: token.denominator,
+      };
+    case 'ScalarSolution':
+      // Convert ScalarSolution token back to Scalar token
+      return {
+        type: 'Scalar',
+        value: token.value,
+      };
+    default:
+      // Return as-is for Imperial, Scalar, Operator, etc.
+      return token;
+  }
 };

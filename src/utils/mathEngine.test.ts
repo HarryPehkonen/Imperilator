@@ -237,8 +237,8 @@ describe('Math Engine', () => {
       expect(result.error).toBeUndefined();
       expect(result.newTokens[0]).toEqual({
         type: 'Length',
-        totalInches: 25, // 27 + 18 - 8
-        feet: 2,
+        totalInches: 37, // 27 + 18 - 8
+        feet: 3,
         inches: 1,
         numerator: 0,
         denominator: 1,
@@ -260,15 +260,15 @@ describe('Math Engine', () => {
       expect(result.error).toBeUndefined();
       expect(result.newTokens[0]).toEqual({
         type: 'Length',
-        totalInches: 24, // 10 + 12
-        feet: 2,
-        inches: 0,
+        totalInches: 22, // 2.5 × 4 = 10, 10 + 12 = 22
+        feet: 1,
+        inches: 10,
         numerator: 0,
         denominator: 1,
       });
     });
 
-    test('should currently fail complex expressions (not yet implemented)', () => {
+    test('should handle complex scalar expressions: 3 + 4 × 2 = 11', () => {
       const tokens: MathToken[] = [
         createScalarToken('3'),
         createOperatorToken('+'),
@@ -280,7 +280,11 @@ describe('Math Engine', () => {
 
       const result = performCalculation(tokens);
 
-      expect(result.error).toBe('Complex expressions not yet supported');
+      expect(result.error).toBeUndefined();
+      expect(result.newTokens[0]).toEqual({
+        type: 'ScalarSolution',
+        value: '11', // 3 + (4 × 2)
+      });
     });
   });
 });
