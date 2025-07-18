@@ -113,7 +113,7 @@ describe('Math Token Processor', () => {
   });
 
   test('should handle user reported backspace scenario with simplified architecture', () => {
-    // User reported: 2/16, 4", 5', backspace should show "4 2/16in" not "2/16in"
+    // User reported: 2/16, 4", 5', backspace should show "4 1/8in" (simplified) not "2/16in"
     const inputTokens = [
       createToken('Inches', '2/16'),
       createToken('Inches', '4'),
@@ -146,7 +146,7 @@ describe('Math Token Processor', () => {
     });
     
     const display = buildDisplayFromMathTokens(mathTokensAfterBackspace);
-    expect(display).toBe('4 2/16in');
+    expect(display).toBe('4 1/8in');
   });
 
   test('should handle backspace with operator tokens', () => {
@@ -205,5 +205,34 @@ describe('Math Token Processor', () => {
     
     const display = buildDisplayFromMathTokens(mathTokensAfterSecondBackspace);
     expect(display).toBe('4in');
+  });
+
+  test('should display total inches in brackets for Length solution tokens', () => {
+    // Test length solution token formatting with total inches
+    const lengthSolutionToken = {
+      type: 'Length' as const,
+      totalInches: 30,
+      feet: 2,
+      inches: 6,
+      numerator: 0,
+      denominator: 1,
+    };
+    
+    const display = buildDisplayFromMathTokens([lengthSolutionToken]);
+    expect(display).toBe('2ft 6in (30in)');
+  });
+
+  test('should simplify fractions in display', () => {
+    // Test that fractions are simplified in display
+    const imperialToken = {
+      type: 'Imperial' as const,
+      feet: 0,
+      inches: 3,
+      numerator: 4,
+      denominator: 16,
+    };
+    
+    const display = buildDisplayFromMathTokens([imperialToken]);
+    expect(display).toBe('3 1/4in'); // 4/16 simplified to 1/4
   });
 });

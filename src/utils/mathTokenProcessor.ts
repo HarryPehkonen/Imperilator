@@ -157,7 +157,9 @@ const formatImperialToken = (token: ImperialToken | any): string => {
       if (token.inches > 0) {
         inchesStr += ' '; // Add space between inches and fraction
       }
-      inchesStr += `${token.numerator}/${token.denominator}`;
+      // Simplify the fraction before displaying
+      const simplified = simplifyFraction(token.numerator, token.denominator);
+      inchesStr += `${simplified.numerator}/${simplified.denominator}`;
     }
     if (inchesStr) {
       parts.push(`${inchesStr}in`);
@@ -169,6 +171,32 @@ const formatImperialToken = (token: ImperialToken | any): string => {
     return '0';
   }
   
-  return parts.join(' ');
+  let result = parts.join(' ');
+  
+  // Add total inches in brackets for Length solution tokens
+  if (token.type === 'Length' && token.totalInches !== undefined) {
+    result += ` (${token.totalInches}in)`;
+  }
+  
+  return result;
+};
+
+// Helper function to simplify fractions
+const simplifyFraction = (numerator: number, denominator: number): { numerator: number, denominator: number } => {
+  if (numerator === 0) {
+    return { numerator: 0, denominator: 1 };
+  }
+  
+  // Find the greatest common divisor
+  const gcd = (a: number, b: number): number => {
+    return b === 0 ? a : gcd(b, a % b);
+  };
+  
+  const divisor = gcd(Math.abs(numerator), Math.abs(denominator));
+  
+  return {
+    numerator: numerator / divisor,
+    denominator: denominator / divisor,
+  };
 };
 

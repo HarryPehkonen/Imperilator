@@ -37,18 +37,38 @@ export const NumericPad: React.FC<NumericPadProps> = ({
     }
   };
 
+  // Helper function to simplify fractions for display
+  const simplifyFraction = (numerator: number, denominator: number): { numerator: number, denominator: number } => {
+    if (numerator === 0) {
+      return { numerator: 0, denominator: 1 };
+    }
+    
+    // Find the greatest common divisor
+    const gcd = (a: number, b: number): number => {
+      return b === 0 ? a : gcd(b, a % b);
+    };
+    
+    const divisor = gcd(Math.abs(numerator), Math.abs(denominator));
+    
+    return {
+      numerator: numerator / divisor,
+      denominator: denominator / divisor,
+    };
+  };
+
   const renderFractionButtons = () => {
     if (!showFractions) return null;
     
     const fractions = [];
     for (let i = 1; i < fractionDenominator; i++) {
+      const simplified = simplifyFraction(i, fractionDenominator);
       fractions.push(
         <button
           key={i}
           onClick={() => handleFractionClick(i)}
           className={`fraction-btn ${value.numerator === i ? 'active' : ''}`}
         >
-          {i}/{fractionDenominator}
+          {simplified.numerator}/{simplified.denominator}
         </button>
       );
     }
