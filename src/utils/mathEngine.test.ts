@@ -287,4 +287,67 @@ describe('Math Engine', () => {
       });
     });
   });
+
+  describe('Volume Calculations', () => {
+    test('should calculate volume: 4in × 3in × 5in = 60 cu.in', () => {
+      // This tests Length × Length = Area, then Area × Length = Volume
+      const tokens: MathToken[] = [
+        createImperialToken(0, 4, 0, 16), // 4in
+        createOperatorToken('x'),
+        createImperialToken(0, 3, 0, 16), // 3in
+        createOperatorToken('x'),
+        createImperialToken(0, 5, 0, 16), // 5in
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeUndefined();
+      expect(result.newTokens[0]).toEqual({
+        type: 'Volume',
+        totalCubicInches: 60,
+        displayValue: '60.00 cu.in',
+      });
+    });
+
+    test('should calculate volume with feet: 1ft × 2ft × 3ft = 6 cu.ft', () => {
+      const tokens: MathToken[] = [
+        createImperialToken(1, 0, 0, 16), // 1ft
+        createOperatorToken('x'),
+        createImperialToken(2, 0, 0, 16), // 2ft
+        createOperatorToken('x'),
+        createImperialToken(3, 0, 0, 16), // 3ft
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeUndefined();
+      expect(result.newTokens[0]).toEqual({
+        type: 'Volume',
+        totalCubicInches: 10368, // 1ft×2ft×3ft = 12×24×36 = 10368 cu.in = 6 cu.ft
+        displayValue: '6 cu.ft',
+      });
+    });
+
+    test('should handle mixed volume calculation: 6in × 8in × 1ft = 576 cu.in', () => {
+      const tokens: MathToken[] = [
+        createImperialToken(0, 6, 0, 16), // 6in
+        createOperatorToken('x'),
+        createImperialToken(0, 8, 0, 16), // 8in
+        createOperatorToken('x'),
+        createImperialToken(1, 0, 0, 16), // 1ft (12in)
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeUndefined();
+      expect(result.newTokens[0]).toEqual({
+        type: 'Volume',
+        totalCubicInches: 576, // 6 × 8 × 12 = 576
+        displayValue: '576.00 cu.in',
+      });
+    });
+  });
 });

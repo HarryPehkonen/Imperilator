@@ -235,4 +235,28 @@ describe('Math Token Processor', () => {
     const display = buildDisplayFromMathTokens([imperialToken]);
     expect(display).toBe('3 1/4in'); // 4/16 simplified to 1/4
   });
+
+  test('should display area with total square inches', () => {
+    // Test area solution token formatting
+    const areaSolutionToken = {
+      type: 'Area' as const,
+      totalSquareInches: 50,
+      displayValue: '50.00 sq.in',
+    };
+    
+    const display = buildDisplayFromMathTokens([areaSolutionToken]);
+    expect(display).toBe('50.00 sq.in (50 sq.in)');
+  });
+
+  test('should display volume with total cubic inches', () => {
+    // Test volume solution token formatting
+    const volumeSolutionToken = {
+      type: 'Volume' as const,
+      totalCubicInches: 120,
+      displayValue: '120.00 cu.in',
+    };
+    
+    const display = buildDisplayFromMathTokens([volumeSolutionToken]);
+    expect(display).toBe('120.00 cu.in (120 cu.in)');
+  });
 });

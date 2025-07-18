@@ -211,6 +211,20 @@ const evaluateBinaryOperation = (left: MathToken, operator: Operator, right: Mat
     return multiplyLengths(leftToken as ImperialToken, rightToken as ImperialToken);
   }
 
+  // Area × Length = Volume
+  if (leftType === 'Area' && 
+      (rightBaseType === 'Imperial' || rightBaseType === 'Length') && 
+      operator === 'x') {
+    return multiplyAreaByLength(left as any, rightToken as ImperialToken);
+  }
+
+  // Length × Area = Volume
+  if ((leftBaseType === 'Imperial' || leftBaseType === 'Length') && 
+      rightType === 'Area' && 
+      operator === 'x') {
+    return multiplyAreaByLength(right as any, leftToken as ImperialToken);
+  }
+
   // Scalar operations
   if ((leftBaseType === 'Scalar' || leftBaseType === 'ScalarSolution') && 
       (rightBaseType === 'Scalar' || rightBaseType === 'ScalarSolution')) {
@@ -254,6 +268,17 @@ const multiplyLengths = (left: ImperialToken, right: ImperialToken): AreaSolutio
     type: 'Area',
     totalSquareInches,
     displayValue: formatSquareInches(totalSquareInches),
+  };
+};
+
+const multiplyAreaByLength = (area: any, length: ImperialToken): any => {
+  const lengthInches = imperialToInches(length);
+  const totalCubicInches = area.totalSquareInches * lengthInches;
+  
+  return {
+    type: 'Volume',
+    totalCubicInches,
+    displayValue: formatCubicInches(totalCubicInches),
   };
 };
 
@@ -355,6 +380,21 @@ const formatSquareInches = (squareInches: number): string => {
   return parts.length > 0 ? parts.join(' ') : '0 sq.in';
 };
 
+const formatCubicInches = (cubicInches: number): string => {
+  const cuFeet = Math.floor(cubicInches / 1728); // 1728 cu in = 1 cu ft
+  const remainingCuInches = cubicInches - (cuFeet * 1728);
+  
+  const parts: string[] = [];
+  if (cuFeet > 0) {
+    parts.push(`${cuFeet} cu.ft`);
+  }
+  if (remainingCuInches > 0) {
+    parts.push(`${remainingCuInches.toFixed(2)} cu.in`);
+  }
+  
+  return parts.length > 0 ? parts.join(' ') : '0 cu.in';
+};
+
 // Convert simple tokens to solution tokens
 const convertImperialToLengthSolution = (imperial: ImperialToken): LengthSolutionToken => {
   const totalInches = imperialToInches(imperial);
@@ -386,6 +426,10 @@ const convertSolutionTokenToBase = (token: MathToken): MathToken => {
         type: 'Scalar',
         value: token.value,
       };
+    case 'Area':
+    case 'Volume':
+      // Area and Volume tokens don't convert to base types - they stay as-is
+      return token;
     default:
       // Return as-is for Imperial, Scalar, Operator, etc.
       return token;

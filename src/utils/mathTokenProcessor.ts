@@ -130,9 +130,9 @@ export const buildDisplayFromMathTokens = (mathTokens: MathToken[]): string => {
       case 'Length':
         return formatImperialToken(token);
       case 'Area':
-        return token.displayValue;
+        return `${token.displayValue} (${token.totalSquareInches} sq.in)`;
       case 'Volume':
-        return token.displayValue;
+        return `${token.displayValue} (${token.totalCubicInches} cu.in)`;
       case 'ScalarSolution':
         return token.value;
       default:
