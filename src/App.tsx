@@ -1,21 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { NumericPad } from './components/NumericPad';
 import { ScalarPad } from './components/ScalarPad';
 import { FractionSelector } from './components/FractionSelector';
 import { GlobalControls } from './components/GlobalControls';
-import { StateIndicators } from './components/StateIndicators';
 import { MainDisplay } from './components/MainDisplay';
 import { OperatorButtons } from './components/OperatorButtons';
 import { createInitialState, processToken, createToken } from './utils/tokenProcessor';
-import { createInitialMathTokenSystem, processInputTokensToMathTokens, buildDisplayFromMathTokens, removeLastUsefulToken } from './utils/mathTokenProcessor';
+import { processInputTokensToMathTokens, buildDisplayFromMathTokens } from './utils/mathTokenProcessor';
 import { performCalculation } from './utils/mathEngine';
-import type { AppStateComplete, InputToken, FractionDenominator, Operator, MathTokenSystem } from './types';
+import type { AppStateComplete, InputToken, FractionDenominator, Operator } from './types';
 import './components/NumericPad.css';
 import './App.css';
 
+interface CalculationHistoryItem {
+  expression: string;
+  result: string;
+}
+
 function App() {
   const [appState, setAppState] = useState<AppStateComplete>(createInitialState());
-  const [mathTokenSystem, setMathTokenSystem] = useState<MathTokenSystem>(createInitialMathTokenSystem());
+  const [usefulTokens, setUsefulTokens] = useState<InputToken[]>([]);
+  const [calculationHistory, setCalculationHistory] = useState<CalculationHistoryItem[]>([]);
+  
+  // Derive math tokens and display from useful tokens
+  const mathTokens = useMemo(() => processInputTokensToMathTokens(usefulTokens), [usefulTokens]);
+  const displayValue = useMemo(() => buildDisplayFromMathTokens(mathTokens), [mathTokens]);
 
   useEffect(() => {
     if (appState.currentState === 'Error') {
@@ -39,21 +48,8 @@ function App() {
       return;
     }
     
-    const newState = processToken(appState, token);
-    setAppState(newState);
-    
-    // Update math token system
-    setMathTokenSystem(prev => {
-      const newInputTokens = [...prev.inputTokens, token];
-      const newMathTokens = processInputTokensToMathTokens(newInputTokens, newState.currentState);
-      const newDisplayValue = buildDisplayFromMathTokens(newMathTokens);
-      
-      return {
-        inputTokens: newInputTokens,
-        mathTokens: newMathTokens,
-        displayValue: newDisplayValue,
-      };
-    });
+    // Add token to useful tokens
+    setUsefulTokens(prev => [...prev, token]);
   };
 
   // Generate tokens for different interactions
@@ -85,50 +81,52 @@ function App() {
 
   const handleOperatorClick = (operator: Operator) => {
     const token = createToken('Operator', operator);
-    handleToken(token);
     
-    // If it's an equals operator, perform calculation after token is processed
+    // If it's an equals operator, perform calculation immediately
     if (operator === '=') {
-      setTimeout(() => {
-        setMathTokenSystem(prev => {
-          const result = performCalculation(prev.mathTokens);
-          if (result.error) {
-            console.error('Calculation error:', result.error);
-            return prev; // Don't update on error
-          }
-          
-          const newDisplayValue = buildDisplayFromMathTokens(result.newTokens);
-          return {
-            ...prev,
-            mathTokens: result.newTokens,
-            displayValue: newDisplayValue,
-          };
-        });
-      }, 0);
+      // Create math tokens with the equals operator included
+      const tokensWithEquals = [...usefulTokens, token];
+      const mathTokensWithEquals = processInputTokensToMathTokens(tokensWithEquals);
+      
+      const result = performCalculation(mathTokensWithEquals);
+      if (result.error) {
+        console.error('Calculation error:', result.error);
+        return; // Don't update on error
+      }
+      
+      // Get the expression before equals (remove the = token)
+      const expressionTokens = mathTokensWithEquals.filter(token => 
+        !(token.type === 'Operator' && token.operator === '=')
+      );
+      const expression = buildDisplayFromMathTokens(expressionTokens);
+      const resultDisplay = buildDisplayFromMathTokens(result.newTokens);
+      
+      // Add to history (keep only last 4 items)
+      setCalculationHistory(prevHistory => {
+        const newHistory = [
+          ...prevHistory,
+          { expression, result: resultDisplay }
+        ];
+        return newHistory.slice(-4); // Keep only last 4 calculations
+      });
+      
+      // Reset for new calculation
+      setAppState(createInitialState());
+      setUsefulTokens([]);
+    } else {
+      // For other operators, just add to useful tokens
+      handleToken(token);
     }
   };
 
   const handleClear = () => {
-    const token = createToken('Control', 'Clear');
-    handleToken(token);
-    setMathTokenSystem(createInitialMathTokenSystem());
+    setUsefulTokens([]);
+    setCalculationHistory([]); // Clear history when clearing all
+    setAppState(createInitialState());
   };
 
   const handleBackspace = () => {
-    setMathTokenSystem(prev => {
-      const newMathTokens = removeLastUsefulToken(prev.mathTokens);
-      const newDisplayValue = buildDisplayFromMathTokens(newMathTokens);
-      
-      // If we removed a token, we need to rebuild inputTokens
-      // For now, we'll keep the inputTokens as-is for debugging
-      // In a full implementation, we might need to rebuild them
-      
-      return {
-        ...prev,
-        mathTokens: newMathTokens,
-        displayValue: newDisplayValue,
-      };
-    });
+    setUsefulTokens(prev => prev.slice(0, -1)); // Simply remove the last token
   };
 
   const handleFractionDenominatorChange = (denominator: FractionDenominator) => {
@@ -151,31 +149,15 @@ function App() {
 
   // For debugging - expose token history
   const exportTokenHistory = () => {
-    console.log('Input Tokens:', JSON.stringify(mathTokenSystem.inputTokens, null, 2));
-    console.log('Math Tokens:', JSON.stringify(mathTokenSystem.mathTokens, null, 2));
-    return { inputTokens: mathTokenSystem.inputTokens, mathTokens: mathTokenSystem.mathTokens };
+    console.log('Useful Tokens:', JSON.stringify(usefulTokens, null, 2));
+    console.log('Math Tokens:', JSON.stringify(mathTokens, null, 2));
+    return { usefulTokens, mathTokens };
   };
 
   // For testing - process token sequence
   const processTokenSequence = (tokens: InputToken[]) => {
-    let currentState = createInitialState();
-    currentState.fractionDenominator = appState.fractionDenominator;
-    
-    for (const token of tokens) {
-      currentState = processToken(currentState, token);
-    }
-    
-    const newMathTokens = processInputTokensToMathTokens(tokens, currentState.currentState);
-    const newDisplayValue = buildDisplayFromMathTokens(newMathTokens);
-    
-    setAppState(currentState);
-    setMathTokenSystem({
-      inputTokens: tokens,
-      mathTokens: newMathTokens,
-      displayValue: newDisplayValue,
-    });
-    
-    return { state: currentState, mathTokens: newMathTokens };
+    setUsefulTokens(tokens);
+    return { mathTokens: processInputTokensToMathTokens(tokens) };
   };
 
   // Expose functions for testing
@@ -188,7 +170,7 @@ function App() {
         <h1>Imperilator Input</h1>
         <p>Measurement Input Tool</p>
         <small style={{ color: '#666' }}>
-          Input: {mathTokenSystem.inputTokens.length} | Math: {mathTokenSystem.mathTokens.length} | 
+          Useful: {usefulTokens.length} | Math: {mathTokens.length} | 
           <button onClick={exportTokenHistory} style={{ marginLeft: '0.5rem', fontSize: '0.8rem' }}>
             Export Tokens
           </button>
@@ -196,9 +178,11 @@ function App() {
       </header>
       
       <main className="app-main">
-        <MainDisplay value={mathTokenSystem.displayValue} />
+        <MainDisplay 
+          value={displayValue} 
+          history={calculationHistory}
+        />
         
-        <StateIndicators currentState={appState.currentState} />
         
         <FractionSelector
           selectedDenominator={appState.fractionDenominator}

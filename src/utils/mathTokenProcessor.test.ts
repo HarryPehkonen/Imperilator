@@ -1,8 +1,6 @@
 import { 
   processInputTokensToMathTokens, 
-  buildDisplayFromMathTokens, 
-  removeLastUsefulToken,
-  createInitialMathTokenSystem
+  buildDisplayFromMathTokens
 } from './mathTokenProcessor';
 import { createToken } from './tokenProcessor';
 
@@ -13,7 +11,7 @@ describe('Math Token Processor', () => {
       createToken('Feet', '2'),
     ];
     
-    const mathTokens = processInputTokensToMathTokens(inputTokens, 'Imperial');
+    const mathTokens = processInputTokensToMathTokens(inputTokens);
     
     expect(mathTokens).toHaveLength(1);
     expect(mathTokens[0]).toEqual({
@@ -31,7 +29,7 @@ describe('Math Token Processor', () => {
       createToken('Inches', '1/2'),
     ];
     
-    const mathTokens = processInputTokensToMathTokens(inputTokens, 'Imperial');
+    const mathTokens = processInputTokensToMathTokens(inputTokens);
     
     expect(mathTokens).toHaveLength(1);
     expect(mathTokens[0]).toEqual({
@@ -51,7 +49,7 @@ describe('Math Token Processor', () => {
       createToken('Scalar', '4'),
     ];
     
-    const mathTokens = processInputTokensToMathTokens(inputTokens, 'Scalar');
+    const mathTokens = processInputTokensToMathTokens(inputTokens);
     
     expect(mathTokens).toHaveLength(1);
     expect(mathTokens[0]).toEqual({
@@ -68,7 +66,7 @@ describe('Math Token Processor', () => {
       createToken('Inches', '1/4'),
     ];
     
-    const mathTokens = processInputTokensToMathTokens(inputTokens, 'Imperial');
+    const mathTokens = processInputTokensToMathTokens(inputTokens);
     
     expect(mathTokens).toHaveLength(3);
     expect(mathTokens[0]).toEqual({
@@ -114,88 +112,98 @@ describe('Math Token Processor', () => {
     expect(display).toBe('5ft 3 1/4in + 3.14');
   });
 
-  test('should remove last useful token with backspace', () => {
-    const mathTokens = [
-      {
-        type: 'Imperial' as const,
-        feet: 5,
-        inches: 3,
-        numerator: 1,
-        denominator: 4,
-      },
-      {
-        type: 'Scalar' as const,
-        value: '123',
-      },
-    ];
-    
-    const result = removeLastUsefulToken(mathTokens);
-    
-    expect(result).toHaveLength(2);
-    expect(result[1]).toEqual({
-      type: 'Scalar',
-      value: '12', // Last character removed
-    });
-  });
-
-  test('should remove entire token when backspace exhausts content', () => {
-    const mathTokens = [
-      {
-        type: 'Imperial' as const,
-        feet: 5,
-        inches: 0,
-        numerator: 0,
-        denominator: 16,
-      },
-      {
-        type: 'Scalar' as const,
-        value: '1',
-      },
-    ];
-    
-    const result = removeLastUsefulToken(mathTokens);
-    
-    expect(result).toHaveLength(1);
-    expect(result[0]).toEqual({
-      type: 'Imperial',
-      feet: 5,
-      inches: 0,
-      numerator: 0,
-      denominator: 16,
-    });
-  });
-
-  test('should handle complex sequence from user example', () => {
-    // 1/2, 2 inches, 4 feet, then backspace should show "2 1/2in"
+  test('should handle user reported backspace scenario with simplified architecture', () => {
+    // User reported: 2/16, 4", 5', backspace should show "4 2/16in" not "2/16in"
     const inputTokens = [
-      createToken('Inches', '1/2'),
-      createToken('Inches', '2'),
-      createToken('Feet', '4'),
+      createToken('Inches', '2/16'),
+      createToken('Inches', '4'),
+      createToken('Feet', '5'),
     ];
     
-    const mathTokens = processInputTokensToMathTokens(inputTokens, 'Imperial');
+    const mathTokens = processInputTokensToMathTokens(inputTokens);
     
     // Should create one Imperial token with all the values
     expect(mathTokens).toHaveLength(1);
     expect(mathTokens[0]).toEqual({
       type: 'Imperial',
-      feet: 4,
-      inches: 2,
-      numerator: 1,
-      denominator: 2,
+      feet: 5,
+      inches: 4,
+      numerator: 2,
+      denominator: 16,
     });
     
-    // After backspace (removes feet)
-    const afterBackspace = removeLastUsefulToken(mathTokens);
-    expect(afterBackspace[0]).toEqual({
+    // After backspace (simulate removing last input token)
+    const inputTokensAfterBackspace = inputTokens.slice(0, -1); // Remove last token
+    const mathTokensAfterBackspace = processInputTokensToMathTokens(inputTokensAfterBackspace);
+    
+    expect(mathTokensAfterBackspace).toHaveLength(1);
+    expect(mathTokensAfterBackspace[0]).toEqual({
       type: 'Imperial',
       feet: 0,
-      inches: 2,
-      numerator: 1,
-      denominator: 2,
+      inches: 4,
+      numerator: 2,
+      denominator: 16,
     });
     
-    const display = buildDisplayFromMathTokens(afterBackspace);
-    expect(display).toBe('2 1/2in');
+    const display = buildDisplayFromMathTokens(mathTokensAfterBackspace);
+    expect(display).toBe('4 2/16in');
+  });
+
+  test('should handle backspace with operator tokens', () => {
+    // Test: 4" + 3" backspace backspace - should show "4in -" not "4in + 3in -"
+    const inputTokens = [
+      createToken('Inches', '4'),
+      createToken('Operator', '+'),
+      createToken('Inches', '3'),
+    ];
+    
+    const mathTokens = processInputTokensToMathTokens(inputTokens);
+    
+    // Should have: Imperial(4in), Operator(+), Imperial(3in)
+    expect(mathTokens).toHaveLength(3);
+    expect(mathTokens[0]).toEqual({
+      type: 'Imperial',
+      feet: 0,
+      inches: 4,
+      numerator: 0,
+      denominator: 16,
+    });
+    expect(mathTokens[1]).toEqual({
+      type: 'Operator',
+      operator: '+',
+    });
+    expect(mathTokens[2]).toEqual({
+      type: 'Imperial',
+      feet: 0,
+      inches: 3,
+      numerator: 0,
+      denominator: 16,
+    });
+    
+    // After first backspace (remove 3in token)
+    const afterFirstBackspace = inputTokens.slice(0, -1);
+    const mathTokensAfterFirstBackspace = processInputTokensToMathTokens(afterFirstBackspace);
+    
+    expect(mathTokensAfterFirstBackspace).toHaveLength(2);
+    expect(mathTokensAfterFirstBackspace[1]).toEqual({
+      type: 'Operator',
+      operator: '+',
+    });
+    
+    // After second backspace (remove + token)
+    const afterSecondBackspace = afterFirstBackspace.slice(0, -1);
+    const mathTokensAfterSecondBackspace = processInputTokensToMathTokens(afterSecondBackspace);
+    
+    expect(mathTokensAfterSecondBackspace).toHaveLength(1);
+    expect(mathTokensAfterSecondBackspace[0]).toEqual({
+      type: 'Imperial',
+      feet: 0,
+      inches: 4,
+      numerator: 0,
+      denominator: 16,
+    });
+    
+    const display = buildDisplayFromMathTokens(mathTokensAfterSecondBackspace);
+    expect(display).toBe('4in');
   });
 });

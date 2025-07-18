@@ -1,25 +1,17 @@
-import type { InputToken, MathToken, ImperialToken, ScalarToken, MathTokenSystem, AppState } from '../types';
+import type { InputToken, MathToken, ImperialToken, ScalarToken, AppState } from '../types';
 
-export const createInitialMathTokenSystem = (): MathTokenSystem => ({
-  inputTokens: [],
-  mathTokens: [],
-  displayValue: '',
-});
 
-export const processInputTokensToMathTokens = (inputTokens: InputToken[], _currentState: AppState): MathToken[] => {
+export const processInputTokensToMathTokens = (inputTokens: InputToken[], _currentState?: AppState): MathToken[] => {
   const mathTokens: MathToken[] = [];
   let currentImperialToken: ImperialToken | null = null;
   let currentScalarToken: ScalarToken | null = null;
-  let lastState: AppState = 'Input';
+  let lastTokenType: 'Input' | 'Imperial' | 'Scalar' = 'Input';
   
   for (const token of inputTokens) {
     // Skip control tokens for math token generation
     if (token.pad === 'Control') {
       continue;
     }
-    
-    // Handle state transitions
-    determineStateAfterToken(lastState, token);
     
     if (token.pad === 'Operator') {
       // Finalize current tokens before adding operator
@@ -38,13 +30,13 @@ export const processInputTokensToMathTokens = (inputTokens: InputToken[], _curre
         operator: token.key as any,
       });
       
-      lastState = 'Input';
+      lastTokenType = 'Input';
       continue;
     }
     
     if (token.pad === 'Feet' || token.pad === 'Inches') {
-      // Input -> Imperial transition: create new Imperial token
-      if (lastState === 'Input') {
+      // Start new Imperial token or continue existing one
+      if (lastTokenType !== 'Imperial') {
         if (currentImperialToken) {
           mathTokens.push(currentImperialToken);
         }
@@ -55,7 +47,7 @@ export const processInputTokensToMathTokens = (inputTokens: InputToken[], _curre
           numerator: 0,
           denominator: 16,
         };
-        lastState = 'Imperial';
+        lastTokenType = 'Imperial';
       }
       
       if (currentImperialToken) {
@@ -64,8 +56,8 @@ export const processInputTokensToMathTokens = (inputTokens: InputToken[], _curre
     }
     
     if (token.pad === 'Scalar') {
-      // Input -> Scalar transition: create new Scalar token
-      if (lastState === 'Input') {
+      // Start new Scalar token or continue existing one
+      if (lastTokenType !== 'Scalar') {
         if (currentScalarToken) {
           mathTokens.push(currentScalarToken);
         }
@@ -73,7 +65,7 @@ export const processInputTokensToMathTokens = (inputTokens: InputToken[], _curre
           type: 'Scalar',
           value: '',
         };
-        lastState = 'Scalar';
+        lastTokenType = 'Scalar';
       }
       
       if (currentScalarToken) {
@@ -93,18 +85,6 @@ export const processInputTokensToMathTokens = (inputTokens: InputToken[], _curre
   return mathTokens;
 };
 
-const determineStateAfterToken = (currentState: AppState, token: InputToken): AppState => {
-  if (token.pad === 'Operator') {
-    return 'Input';
-  }
-  if (token.pad === 'Feet' || token.pad === 'Inches') {
-    return 'Imperial';
-  }
-  if (token.pad === 'Scalar') {
-    return 'Scalar';
-  }
-  return currentState;
-};
 
 const updateImperialToken = (imperialToken: ImperialToken, token: InputToken): void => {
   if (token.key.includes('/')) {
@@ -192,61 +172,3 @@ const formatImperialToken = (token: ImperialToken | any): string => {
   return parts.join(' ');
 };
 
-export const removeLastUsefulToken = (mathTokens: MathToken[]): MathToken[] => {
-  if (mathTokens.length === 0) return mathTokens;
-  
-  const newTokens = [...mathTokens];
-  const lastToken = newTokens[newTokens.length - 1];
-  
-  // For Imperial and Scalar tokens, try to backspace within the token first
-  if (lastToken.type === 'Imperial') {
-    if (canBackspaceImperialToken(lastToken)) {
-      backspaceImperialToken(lastToken);
-      // Check if token is now empty, if so remove it
-      if (!canBackspaceImperialToken(lastToken)) {
-        newTokens.pop();
-      }
-      return newTokens;
-    }
-  }
-  
-  if (lastToken.type === 'Scalar') {
-    if (canBackspaceScalarToken(lastToken)) {
-      backspaceScalarToken(lastToken);
-      // Check if token is now empty, if so remove it
-      if (!canBackspaceScalarToken(lastToken)) {
-        newTokens.pop();
-      }
-      return newTokens;
-    }
-  }
-  
-  // Otherwise, remove the entire token
-  newTokens.pop();
-  return newTokens;
-};
-
-const canBackspaceImperialToken = (token: ImperialToken): boolean => {
-  return token.numerator > 0 || token.inches > 0 || token.feet > 0;
-};
-
-const backspaceImperialToken = (token: ImperialToken): void => {
-  // Priority: most recently entered -> least recently entered
-  // Based on user expectation: remove feet first, then inches, then fraction
-  if (token.feet > 0) {
-    token.feet = Math.floor(token.feet / 10);
-  } else if (token.inches > 0) {
-    token.inches = Math.floor(token.inches / 10);
-  } else if (token.numerator > 0) {
-    token.numerator = 0;
-    token.denominator = 16;
-  }
-};
-
-const canBackspaceScalarToken = (token: ScalarToken): boolean => {
-  return token.value.length > 0;
-};
-
-const backspaceScalarToken = (token: ScalarToken): void => {
-  token.value = token.value.slice(0, -1);
-};

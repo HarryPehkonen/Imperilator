@@ -38,16 +38,48 @@
   background: #000;
   color: #0f0;
   font-family: 'Courier New', monospace;
-  font-size: 2rem;
+  font-size: 1.2rem;
   font-weight: bold;
   text-align: right;
   padding: 1rem;
   border-radius: 4px;
-  min-height: 3rem;
+  min-height: 8rem;
+  max-height: 8rem;
   border: 2px solid #333;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: flex-end;
+  overflow-y: auto;
+  line-height: 1.4;
+}
+
+.history-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+  opacity: 0.7;
+  font-size: 1rem;
+}
+
+.history-line .expression {
+  flex: 1;
+  text-align: left;
+}
+
+.history-line .result {
+  color: #ff0;
+  font-weight: bold;
+}
+
+.current-line {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: right;
+  color: #0f0;
+  margin-top: 0.5rem;
+  border-top: 1px solid #333;
+  padding-top: 0.5rem;
 }
 
 /* State Indicators */
@@ -345,7 +377,11 @@
   }
   
   .display-screen {
-    font-size: 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .current-line {
+    font-size: 1rem;
   }
   
   .led-container {

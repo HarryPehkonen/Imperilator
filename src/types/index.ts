@@ -93,8 +93,3 @@ export interface ScalarSolutionToken {
 
 export type MathToken = ImperialToken | ScalarToken | OperatorToken | LengthSolutionToken | AreaSolutionToken | VolumeSolutionToken | ScalarSolutionToken;
 
-export interface MathTokenSystem {
-  inputTokens: InputToken[];
-  mathTokens: MathToken[];
-  displayValue: string;
-}
