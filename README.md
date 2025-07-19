@@ -1,4 +1,4 @@
-# Imperilator Input
+# Imperilator
 
 A professional Progressive Web App (PWA) for imperial measurement calculations. Built for contractors, carpenters, and anyone working with feet, inches, and fractions.
 

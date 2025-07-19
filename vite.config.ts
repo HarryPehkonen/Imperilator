@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Imperilator Input',
+        name: 'Imperilator',
         short_name: 'Imperilator',
-        description: 'Measurement Input Tool with Fraction Support',
+        description: 'Measurement Calculator with Fraction Support',
         theme_color: '#007bff',
         background_color: '#ffffff',
         display: 'standalone',
