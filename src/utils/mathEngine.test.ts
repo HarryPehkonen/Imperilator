@@ -133,18 +133,45 @@ describe('Math Engine', () => {
     expect(result.newTokens).toEqual(tokens);
   });
 
-  test('should handle unsupported operations', () => {
+  test('should divide Imperial measurements', () => {
     const tokens: MathToken[] = [
-      createImperialToken(1, 0, 0, 16),
+      createImperialToken(1, 0, 0, 16), // 1ft
       createOperatorToken('/'),
-      createImperialToken(2, 0, 0, 16),
+      createImperialToken(2, 0, 0, 16), // 2ft = 24in
       createOperatorToken('='),
     ];
 
     const result = performCalculation(tokens);
 
-    expect(result.error).toBe('Unsupported operation: Imperial / Imperial');
-    expect(result.newTokens).toEqual(tokens);
+    expect(result.error).toBeUndefined();
+    expect(result.newTokens).toHaveLength(1);
+    expect(result.newTokens[0]).toEqual({
+      type: 'ScalarSolution',
+      value: '0.5',
+      displayValue: '0.5',
+    });
+  });
+
+  test('should divide length by scalar', () => {
+    const tokens: MathToken[] = [
+      createImperialToken(6, 0, 0, 16), // 6ft = 72 inches
+      createOperatorToken('/'),
+      createScalarToken('3'),
+      createOperatorToken('='),
+    ];
+
+    const result = performCalculation(tokens);
+
+    expect(result.error).toBeUndefined();
+    expect(result.newTokens).toHaveLength(1);
+    expect(result.newTokens[0]).toEqual({
+      type: 'Length',
+      totalInches: 24,
+      feet: 2,
+      inches: 0,
+      numerator: 0,
+      denominator: 1,
+    });
   });
 
   test('should handle expressions without equals', () => {

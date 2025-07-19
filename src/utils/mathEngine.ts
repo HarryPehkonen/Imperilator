@@ -225,6 +225,20 @@ const evaluateBinaryOperation = (left: MathToken, operator: Operator, right: Mat
     return multiplyAreaByLength(right as any, leftToken as ImperialToken);
   }
 
+  // Length ÷ Scalar = Length
+  if ((leftBaseType === 'Imperial' || leftBaseType === 'Length') && 
+      (rightBaseType === 'Scalar' || rightBaseType === 'ScalarSolution') && 
+      operator === '/') {
+    return divideLengthByScalar(leftToken as ImperialToken, rightToken as ScalarToken);
+  }
+
+  // Length ÷ Length = Scalar
+  if ((leftBaseType === 'Imperial' || leftBaseType === 'Length') && 
+      (rightBaseType === 'Imperial' || rightBaseType === 'Length') && 
+      operator === '/') {
+    return divideLengths(leftToken as ImperialToken, rightToken as ImperialToken);
+  }
+
   // Scalar operations
   if ((leftBaseType === 'Scalar' || leftBaseType === 'ScalarSolution') && 
       (rightBaseType === 'Scalar' || rightBaseType === 'ScalarSolution')) {
@@ -279,6 +293,32 @@ const multiplyAreaByLength = (area: any, length: ImperialToken): any => {
     type: 'Volume',
     totalCubicInches,
     displayValue: formatCubicInches(totalCubicInches),
+  };
+};
+
+const divideLengthByScalar = (length: ImperialToken, scalar: ScalarToken): LengthSolutionToken => {
+  const scalarValue = parseFloat(scalar.value);
+  if (scalarValue === 0) {
+    throw new Error("Division by zero");
+  }
+  const lengthInches = imperialToInches(length);
+  const totalInches = lengthInches / scalarValue;
+  
+  return inchesToLengthSolution(totalInches);
+};
+
+const divideLengths = (left: ImperialToken, right: ImperialToken): ScalarSolutionToken => {
+  const leftInches = imperialToInches(left);
+  const rightInches = imperialToInches(right);
+  if (rightInches === 0) {
+    throw new Error("Division by zero");
+  }
+  const result = leftInches / rightInches;
+  
+  return {
+    type: 'ScalarSolution',
+    value: result.toString(),
+    displayValue: result.toString(),
   };
 };
 
