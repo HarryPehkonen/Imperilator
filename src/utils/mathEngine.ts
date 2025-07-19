@@ -98,7 +98,7 @@ const getOperatorPrecedence = (operator: Operator): number => {
   }
 };
 
-const isLeftAssociative = (operator: Operator): boolean => {
+const isLeftAssociative = (_operator: Operator): boolean => {
   // All our operators are left-associative
   return true;
 };

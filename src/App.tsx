@@ -5,7 +5,7 @@ import { FractionSelector } from './components/FractionSelector';
 import { GlobalControls } from './components/GlobalControls';
 import { MainDisplay } from './components/MainDisplay';
 import { OperatorButtons } from './components/OperatorButtons';
-import { createInitialState, processToken, createToken } from './utils/tokenProcessor';
+import { createInitialState, createToken } from './utils/tokenProcessor';
 import { processInputTokensToMathTokens, buildDisplayFromMathTokens } from './utils/mathTokenProcessor';
 import { performCalculation } from './utils/mathEngine';
 import type { AppStateComplete, InputToken, FractionDenominator, Operator } from './types';

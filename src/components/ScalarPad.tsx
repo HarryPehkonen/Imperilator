@@ -12,7 +12,7 @@ interface ScalarPadProps {
 export const ScalarPad: React.FC<ScalarPadProps> = ({
   value,
   onChange,
-  label,
+  label: _label,
   onNumberClick,
   onDecimalClick,
 }) => {
