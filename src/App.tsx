@@ -35,12 +35,12 @@ function App() {
     
     
     try {
-      // Validate the token using the validation engine
-      validateToken(appState, token);
-      
-      // Also validate the sequence with this new token
+      // First validate the sequence (catches consecutive operators)
       const newTokenSequence = [...usefulTokens, token];
       validateTokenSequence(newTokenSequence);
+      
+      // Then validate individual token against app state
+      validateToken(appState, token);
       
       // If validation passes, process the token
       const newAppState = processToken(appState, token);
@@ -129,10 +129,21 @@ function App() {
     setUsefulTokens([]);
     setCalculationHistory([]); // Clear history when clearing all
     setAppState(createInitialState());
+    setErrorMessage(undefined); // Clear any error messages
   };
 
   const handleBackspace = () => {
-    setUsefulTokens(prev => prev.slice(0, -1)); // Simply remove the last token
+    setUsefulTokens(prev => {
+      const newTokens = prev.slice(0, -1);
+      // Rebuild app state from the remaining tokens
+      const newAppState = newTokens.reduce((state, token) => {
+        return processToken(state, token);
+      }, createInitialState());
+      setAppState(newAppState);
+      return newTokens;
+    });
+    // Clear any error messages when backspacing
+    setErrorMessage(undefined);
   };
 
   const handleFractionDenominatorChange = (denominator: FractionDenominator) => {
