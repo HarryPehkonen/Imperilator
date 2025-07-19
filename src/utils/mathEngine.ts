@@ -46,7 +46,7 @@ const findLastEqualsOperator = (tokens: MathToken[]): number => {
 
 const evaluateExpression = (tokens: MathToken[]): MathToken => {
   if (tokens.length === 0) {
-    throw new Error("Empty expression");
+    throw new Error("That doesn't make any sense");
   }
 
   // Handle single token

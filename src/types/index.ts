@@ -16,7 +16,7 @@ export interface MeasurementInput {
   inches: InputValue;
 }
 
-export type AppState = 'Input' | 'Imperial' | 'Scalar' | 'Error';
+export type AppState = 'Input' | 'Imperial' | 'Scalar';
 
 export type Operator = '=' | '+' | '-' | 'x' | '/';
 

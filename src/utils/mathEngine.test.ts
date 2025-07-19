@@ -440,7 +440,7 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeDefined();
-      expect(result.error).toBe('Empty expression');
+      expect(result.error).toBe("That doesn't make any sense");
     });
 
     test('should handle multiple equals: 5 + 3 = 2 =', () => {

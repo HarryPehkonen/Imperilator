@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { NumericPad } from './components/NumericPad';
 import { ScalarPad } from './components/ScalarPad';
 import { FractionSelector } from './components/FractionSelector';
@@ -9,6 +9,7 @@ import { ErrorDisplay } from './components/ErrorDisplay';
 import { createInitialState, createToken, processToken } from './utils/tokenProcessor';
 import { processInputTokensToMathTokens, buildDisplayFromMathTokens } from './utils/mathTokenProcessor';
 import { performCalculation } from './utils/mathEngine';
+import { validateToken, validateTokenSequence } from './utils/validationEngine';
 import type { AppStateComplete, InputToken, FractionDenominator, Operator } from './types';
 import './components/NumericPad.css';
 import './App.css';
@@ -28,47 +29,32 @@ function App() {
   const mathTokens = useMemo(() => processInputTokensToMathTokens(usefulTokens), [usefulTokens]);
   const displayValue = useMemo(() => buildDisplayFromMathTokens(mathTokens), [mathTokens]);
 
-  useEffect(() => {
-    if (appState.currentState === 'Error') {
-      const timeout = setTimeout(() => {
-        const token = createToken('Control', 'ErrorTimeout');
-        handleToken(token);
-      }, 1500);
-      return () => clearTimeout(timeout);
-    }
-  }, [appState.currentState]);
 
   const handleToken = (token: InputToken) => {
     console.log('Generated token:', token);
     
-    // Special handling for error timeout
-    if (token.key === 'ErrorTimeout') {
-      setAppState(prev => ({
-        ...prev,
-        currentState: 'Input',
-      }));
-      return;
-    }
     
-    // Validate token using the token processor
-    const newAppState = processToken(appState, token);
-    
-    // Check if the token caused an error
-    if (newAppState.currentState === 'Error') {
-      // Show immediate error feedback for invalid operations
-      if (token.pad === 'Operator') {
-        setErrorMessage('Cannot enter consecutive operators');
-      } else if (token.pad === 'Scalar' && appState.currentState === 'Imperial') {
-        setErrorMessage('Cannot mix scalar and Imperial measurements');
+    try {
+      // Validate the token using the validation engine
+      validateToken(appState, token);
+      
+      // Also validate the sequence with this new token
+      const newTokenSequence = [...usefulTokens, token];
+      validateTokenSequence(newTokenSequence);
+      
+      // If validation passes, process the token
+      const newAppState = processToken(appState, token);
+      setAppState(newAppState);
+      setUsefulTokens(prev => [...prev, token]);
+    } catch (error) {
+      // Show immediate error feedback for validation failures
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
       } else {
         setErrorMessage('Invalid operation');
       }
       return; // Don't add the invalid token
     }
-    
-    // Update app state and add token to useful tokens
-    setAppState(newAppState);
-    setUsefulTokens(prev => [...prev, token]);
   };
 
   // Generate tokens for different interactions

@@ -100,13 +100,13 @@ describe('Token Processor', () => {
       expect(finalState.measurements.scalar.value).toBe('3'); // Value persists
     });
 
-    test('Operator from Input should trigger Error', () => {
+    test('Operator from Input should transition to Input state', () => {
       const tokens = createTokenSequence([
         { pad: 'Operator', key: '=' }
       ]);
       
       const finalState = processTokens(initialState, tokens);
-      expect(finalState.currentState).toBe('Error');
+      expect(finalState.currentState).toBe('Input');
     });
   });
 
@@ -142,25 +142,26 @@ describe('Token Processor', () => {
     });
   });
 
-  describe('Error States', () => {
-    test('Error state: Scalar input while in Imperial', () => {
+  describe('Mixed Input Processing', () => {
+    test('Scalar input while in Imperial should remain in Imperial state', () => {
       const tokens = createTokenSequence([
         { pad: 'Feet', key: '5' },
         { pad: 'Scalar', key: '3' }
       ]);
       
       const finalState = processTokens(initialState, tokens);
-      expect(finalState.currentState).toBe('Error');
+      expect(finalState.currentState).toBe('Imperial'); // Should remain in Imperial state
       expect(finalState.measurements.feet.whole).toBe(5); // Imperial value persists
+      expect(finalState.measurements.scalar.value).toBe('3'); // Scalar value set but state doesn't change
     });
 
-    test('Error state: Operator while in Input', () => {
+    test('Operator while in Input should transition to Input state', () => {
       const tokens = createTokenSequence([
         { pad: 'Operator', key: '=' }
       ]);
       
       const finalState = processTokens(initialState, tokens);
-      expect(finalState.currentState).toBe('Error');
+      expect(finalState.currentState).toBe('Input');
     });
   });
 

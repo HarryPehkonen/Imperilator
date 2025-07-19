@@ -45,21 +45,12 @@ const processControlToken = (state: AppStateComplete, token: InputToken): AppSta
 };
 
 const processOperatorToken = (state: AppStateComplete, _token: InputToken): AppStateComplete => {
-  if (state.currentState === 'Input') {
-    return {
-      ...state,
-      currentState: 'Error',
-    };
-  }
-  
-  if (state.currentState === 'Imperial' || state.currentState === 'Scalar') {
-    return {
-      ...state,
-      currentState: 'Input',
-    };
-  }
-  
-  return state;
+  // Validation is now handled by the validation engine
+  // Just transition to Input state for next measurement
+  return {
+    ...state,
+    currentState: 'Input',
+  };
 };
 
 const processInputToken = (state: AppStateComplete, token: InputToken): AppStateComplete => {
@@ -79,14 +70,6 @@ const processInputToken = (state: AppStateComplete, token: InputToken): AppState
 const processScalarToken = (state: AppStateComplete, token: InputToken): AppStateComplete => {
   // Set active pad
   state.activePad = 'scalar';
-  
-  // Check for invalid state transition
-  if (state.currentState === 'Imperial') {
-    return {
-      ...state,
-      currentState: 'Error',
-    };
-  }
   
   // Transition to Scalar state if coming from Input
   if (state.currentState === 'Input') {
