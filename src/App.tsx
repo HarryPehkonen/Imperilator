@@ -5,7 +5,8 @@ import { FractionSelector } from './components/FractionSelector';
 import { GlobalControls } from './components/GlobalControls';
 import { MainDisplay } from './components/MainDisplay';
 import { OperatorButtons } from './components/OperatorButtons';
-import { createInitialState, createToken } from './utils/tokenProcessor';
+import { ErrorDisplay } from './components/ErrorDisplay';
+import { createInitialState, createToken, processToken } from './utils/tokenProcessor';
 import { processInputTokensToMathTokens, buildDisplayFromMathTokens } from './utils/mathTokenProcessor';
 import { performCalculation } from './utils/mathEngine';
 import type { AppStateComplete, InputToken, FractionDenominator, Operator } from './types';
@@ -21,6 +22,7 @@ function App() {
   const [appState, setAppState] = useState<AppStateComplete>(createInitialState());
   const [usefulTokens, setUsefulTokens] = useState<InputToken[]>([]);
   const [calculationHistory, setCalculationHistory] = useState<CalculationHistoryItem[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
   
   // Derive math tokens and display from useful tokens
   const mathTokens = useMemo(() => processInputTokensToMathTokens(usefulTokens), [usefulTokens]);
@@ -48,7 +50,24 @@ function App() {
       return;
     }
     
-    // Add token to useful tokens
+    // Validate token using the token processor
+    const newAppState = processToken(appState, token);
+    
+    // Check if the token caused an error
+    if (newAppState.currentState === 'Error') {
+      // Show immediate error feedback for invalid operations
+      if (token.pad === 'Operator') {
+        setErrorMessage('Cannot enter consecutive operators');
+      } else if (token.pad === 'Scalar' && appState.currentState === 'Imperial') {
+        setErrorMessage('Cannot mix scalar and Imperial measurements');
+      } else {
+        setErrorMessage('Invalid operation');
+      }
+      return; // Don't add the invalid token
+    }
+    
+    // Update app state and add token to useful tokens
+    setAppState(newAppState);
     setUsefulTokens(prev => [...prev, token]);
   };
 
@@ -91,6 +110,7 @@ function App() {
       const result = performCalculation(mathTokensWithEquals);
       if (result.error) {
         console.error('Calculation error:', result.error);
+        setErrorMessage(result.error);
         return; // Don't update on error
       }
       
@@ -165,7 +185,11 @@ function App() {
   (window as any).processTokenSequence = processTokenSequence;
 
   return (
-    <div className="app">
+    <div className={`app ${errorMessage ? 'error-shake' : ''}`}>
+      <ErrorDisplay 
+        error={errorMessage} 
+        onClear={() => setErrorMessage(undefined)} 
+      />
       <main className="app-main">
         <MainDisplay 
           value={displayValue} 

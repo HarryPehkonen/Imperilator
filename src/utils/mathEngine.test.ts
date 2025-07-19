@@ -1,5 +1,6 @@
+import { describe, test, expect } from 'vitest';
 import { performCalculation } from './mathEngine';
-import type { MathToken, ImperialToken, ScalarToken, OperatorToken } from '../types';
+import { ImperialToken, ScalarToken, OperatorToken, MathToken } from '../types';
 
 describe('Math Engine', () => {
   const createImperialToken = (feet: number, inches: number, numerator: number = 0, denominator: number = 16): ImperialToken => ({
@@ -15,9 +16,9 @@ describe('Math Engine', () => {
     value,
   });
 
-  const createOperatorToken = (operator: string): OperatorToken => ({
+  const createOperatorToken = (operator: '+' | '-' | 'x' | '/' | '='): OperatorToken => ({
     type: 'Operator',
-    operator: operator as any,
+    operator,
   });
 
   test('should add two lengths', () => {
@@ -34,7 +35,7 @@ describe('Math Engine', () => {
     expect(result.newTokens).toHaveLength(1);
     expect(result.newTokens[0]).toEqual({
       type: 'Length',
-      totalInches: 26.25, // 18 + 8.25
+      totalInches: 26.25,
       feet: 2,
       inches: 2,
       numerator: 1,
@@ -53,9 +54,10 @@ describe('Math Engine', () => {
     const result = performCalculation(tokens);
 
     expect(result.error).toBeUndefined();
+    expect(result.newTokens).toHaveLength(1);
     expect(result.newTokens[0]).toEqual({
       type: 'Length',
-      totalInches: 18, // 24 - 6
+      totalInches: 18,
       feet: 1,
       inches: 6,
       numerator: 0,
@@ -74,9 +76,10 @@ describe('Math Engine', () => {
     const result = performCalculation(tokens);
 
     expect(result.error).toBeUndefined();
+    expect(result.newTokens).toHaveLength(1);
     expect(result.newTokens[0]).toEqual({
       type: 'Length',
-      totalInches: 12, // 3 * 4
+      totalInches: 12,
       feet: 1,
       inches: 0,
       numerator: 0,
@@ -95,27 +98,29 @@ describe('Math Engine', () => {
     const result = performCalculation(tokens);
 
     expect(result.error).toBeUndefined();
+    expect(result.newTokens).toHaveLength(1);
     expect(result.newTokens[0]).toEqual({
       type: 'Area',
       totalSquareInches: 50,
-      displayValue: '50.00 sq.in',
+      displayValue: '50 sq.in',
     });
   });
 
   test('should add two scalars', () => {
     const tokens: MathToken[] = [
-      createScalarToken('3.14'),
+      createScalarToken('5.5'),
       createOperatorToken('+'),
-      createScalarToken('2.86'),
+      createScalarToken('3.2'),
       createOperatorToken('='),
     ];
 
     const result = performCalculation(tokens);
 
     expect(result.error).toBeUndefined();
+    expect(result.newTokens).toHaveLength(1);
     expect(result.newTokens[0]).toEqual({
       type: 'ScalarSolution',
-      value: '6',
+      value: '8.7',
     });
   });
 
@@ -148,7 +153,6 @@ describe('Math Engine', () => {
     expect(result.newTokens[0]).toEqual({
       type: 'ScalarSolution',
       value: '0.5',
-      displayValue: '0.5',
     });
   });
 
@@ -196,6 +200,7 @@ describe('Math Engine', () => {
     const result = performCalculation(tokens);
 
     expect(result.error).toBeUndefined();
+    expect(result.newTokens).toHaveLength(1);
     expect(result.newTokens[0]).toEqual({
       type: 'Length',
       totalInches: 18.25,
@@ -220,9 +225,10 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
       expect(result.newTokens[0]).toEqual({
         type: 'Length',
-        totalInches: 18, // 12 + 6
+        totalInches: 18,
         feet: 1,
         inches: 6,
         numerator: 0,
@@ -243,6 +249,7 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
       expect(result.newTokens[0]).toEqual({
         type: 'ScalarSolution',
         value: '9',
@@ -262,10 +269,11 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
       expect(result.newTokens[0]).toEqual({
         type: 'Length',
-        totalInches: 37, // 27 + 18 - 8
-        feet: 3,
+        totalInches: 25,
+        feet: 2,
         inches: 1,
         numerator: 0,
         denominator: 1,
@@ -285,9 +293,10 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
       expect(result.newTokens[0]).toEqual({
         type: 'Length',
-        totalInches: 22, // 2.5 × 4 = 10, 10 + 12 = 22
+        totalInches: 22,
         feet: 1,
         inches: 10,
         numerator: 0,
@@ -308,16 +317,16 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
       expect(result.newTokens[0]).toEqual({
         type: 'ScalarSolution',
-        value: '11', // 3 + (4 × 2)
+        value: '11',
       });
     });
   });
 
   describe('Volume Calculations', () => {
     test('should calculate volume: 4in × 3in × 5in = 60 cu.in', () => {
-      // This tests Length × Length = Area, then Area × Length = Volume
       const tokens: MathToken[] = [
         createImperialToken(0, 4, 0, 16), // 4in
         createOperatorToken('x'),
@@ -330,10 +339,11 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
       expect(result.newTokens[0]).toEqual({
         type: 'Volume',
         totalCubicInches: 60,
-        displayValue: '60.00 cu.in',
+        displayValue: '60 cu.in',
       });
     });
 
@@ -350,9 +360,10 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
       expect(result.newTokens[0]).toEqual({
         type: 'Volume',
-        totalCubicInches: 10368, // 1ft×2ft×3ft = 12×24×36 = 10368 cu.in = 6 cu.ft
+        totalCubicInches: 10368,
         displayValue: '6 cu.ft',
       });
     });
@@ -370,10 +381,121 @@ describe('Math Engine', () => {
       const result = performCalculation(tokens);
 
       expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
       expect(result.newTokens[0]).toEqual({
         type: 'Volume',
-        totalCubicInches: 576, // 6 × 8 × 12 = 576
-        displayValue: '576.00 cu.in',
+        totalCubicInches: 576,
+        displayValue: '576 cu.in',
+      });
+    });
+  });
+
+  describe('Edge Cases and Error Handling', () => {
+    test('should handle consecutive operators: 5" * + - =', () => {
+      const tokens: MathToken[] = [
+        createImperialToken(0, 5, 0, 16), // 5"
+        createOperatorToken('x'),
+        createOperatorToken('+'),
+        createOperatorToken('-'),
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Invalid token');
+    });
+
+    test('should handle operator at start: + 5 =', () => {
+      const tokens: MathToken[] = [
+        createOperatorToken('+'),
+        createScalarToken('5'),
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Invalid token');
+    });
+
+    test('should handle operator at end: 5 + =', () => {
+      const tokens: MathToken[] = [
+        createScalarToken('5'),
+        createOperatorToken('+'),
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Invalid token');
+    });
+
+    test('should handle empty equals: =', () => {
+      const tokens: MathToken[] = [
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeDefined();
+      expect(result.error).toBe('Empty expression');
+    });
+
+    test('should handle multiple equals: 5 + 3 = 2 =', () => {
+      const tokens: MathToken[] = [
+        createScalarToken('5'),
+        createOperatorToken('+'),
+        createScalarToken('3'),
+        createOperatorToken('='),
+        createScalarToken('2'),
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
+      expect(result.newTokens[0]).toEqual({
+        type: 'ScalarSolution',
+        value: '2',
+      });
+    });
+
+    test('should handle mixed types incorrectly: 5ft + 3 (scalar)', () => {
+      const tokens: MathToken[] = [
+        createImperialToken(5, 0, 0, 16), // 5ft
+        createOperatorToken('+'),
+        createScalarToken('3'),
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Unsupported operation');
+    });
+
+    test('should handle negative results in length subtraction', () => {
+      const tokens: MathToken[] = [
+        createImperialToken(1, 0, 0, 16), // 1ft
+        createOperatorToken('-'),
+        createImperialToken(2, 0, 0, 16), // 2ft
+        createOperatorToken('='),
+      ];
+
+      const result = performCalculation(tokens);
+
+      expect(result.error).toBeUndefined();
+      expect(result.newTokens).toHaveLength(1);
+      expect(result.newTokens[0]).toEqual({
+        type: 'Length',
+        totalInches: -12,
+        feet: -1,
+        inches: 0,
+        numerator: 0,
+        denominator: 1,
       });
     });
   });

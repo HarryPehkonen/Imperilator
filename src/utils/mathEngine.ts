@@ -318,7 +318,6 @@ const divideLengths = (left: ImperialToken, right: ImperialToken): ScalarSolutio
   return {
     type: 'ScalarSolution',
     value: result.toString(),
-    displayValue: result.toString(),
   };
 };
 
