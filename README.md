@@ -34,8 +34,17 @@ npm test
 # Run tests in watch mode
 npm run test:watch
 
-# Run tests with coverage
+# Run tests with coverage (human-readable)
 npm run test:coverage
+
+# Run tests with LCOV output (for GitHub/GitLab)
+npm run test:coverage:lcov
+
+# Run tests with JSON output (for custom tooling)
+npm run test:coverage:json
+
+# Run tests with CI-optimized output (LCOV + JSON summary)
+npm run test:coverage:ci
 ```
 
 ## 📦 Building for Production
@@ -207,10 +216,29 @@ The app features a professional construction/measurement theme:
 
 ### Running Tests
 ```bash
-npm test              # Run once
-npm run test:watch    # Watch mode
-npm run test:coverage # With coverage report
+npm test                     # Run once
+npm run test:watch           # Watch mode
+npm run test:coverage        # Human-readable coverage report
+npm run test:coverage:ci     # CI/CD optimized (LCOV + JSON summary)
 ```
+
+### CI/CD Integration
+```bash
+# GitHub Actions / GitLab CI
+npm run test:coverage:lcov   # Generates lcov.info file
+
+# Custom tooling / Scripts
+npm run test:coverage:json   # Generates coverage-final.json
+
+# SonarQube / Code quality tools
+npm run test:coverage:ci     # Generates both LCOV and JSON summary
+```
+
+Coverage files are output to `./coverage/` directory:
+- `lcov.info` - LCOV format for GitHub/GitLab
+- `coverage-final.json` - Detailed JSON format
+- `coverage-summary.json` - Summary metrics
+- `index.html` - Interactive HTML report
 
 ### Code Style
 - TypeScript for type safety
