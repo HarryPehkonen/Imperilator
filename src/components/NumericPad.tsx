@@ -78,7 +78,7 @@ export const NumericPad: React.FC<NumericPadProps> = ({
   return (
     <div className="numeric-pad">
       <div className="number-grid">
-        {[7, 8, 9, 4, 5, 6, 1, 2, 3].map(num => (
+        {[7, 8, 9].map(num => (
           <button
             key={num}
             onClick={() => handleNumberClick(num)}
@@ -87,7 +87,26 @@ export const NumericPad: React.FC<NumericPadProps> = ({
             {num}
           </button>
         ))}
-        <button onClick={() => handleNumberClick(0)} className="number-btn">0</button>
+        <div className="pad-label" style={{gridRow: '1 / 5'}}>{label}</div>
+        {[4, 5, 6].map(num => (
+          <button
+            key={num}
+            onClick={() => handleNumberClick(num)}
+            className="number-btn"
+          >
+            {num}
+          </button>
+        ))}
+        {[1, 2, 3].map(num => (
+          <button
+            key={num}
+            onClick={() => handleNumberClick(num)}
+            className="number-btn"
+          >
+            {num}
+          </button>
+        ))}
+        <button onClick={() => handleNumberClick(0)} className="number-btn" style={{gridColumn: '2'}}>0</button>
       </div>
       
       {showFractions && (

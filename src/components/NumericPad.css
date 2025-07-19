@@ -38,8 +38,9 @@
 
 .number-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr) auto;
   gap: 0.25rem;
+  align-items: center;
 }
 
 .number-btn,
@@ -116,6 +117,20 @@
 .fraction-btn.active {
   background: #4caf50;
   color: white;
+}
+
+.pad-label {
+  grid-column: 4;
+  font-size: 0.7rem;
+  color: #666;
+  text-align: center;
+  padding: 0.25rem;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 480px) {
