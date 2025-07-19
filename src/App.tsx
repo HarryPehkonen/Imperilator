@@ -178,6 +178,7 @@ function App() {
           <div 
             className={`pad-wrapper-compact feet-column ${appState.activePad === 'feet' ? 'active' : ''}`}
             onClick={() => handlePadClick('feet')}
+            data-testid="feet-pad"
           >
             <NumericPad
               value={appState.measurements.feet}
@@ -191,6 +192,7 @@ function App() {
           <div 
             className={`pad-wrapper-compact inches-column ${appState.activePad === 'inches' ? 'active' : ''}`}
             onClick={() => handlePadClick('inches')}
+            data-testid="inches-pad"
           >
             <NumericPad
               value={appState.measurements.inches}
@@ -240,6 +242,7 @@ function App() {
           <div 
             className={`pad-wrapper-compact ${appState.activePad === 'scalar' ? 'active' : ''}`}
             onClick={() => handlePadClick('scalar')}
+            data-testid="scalar-pad"
           >
             <ScalarPad
               value={appState.measurements.scalar}
